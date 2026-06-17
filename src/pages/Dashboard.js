@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { events } from '../api';
-import { format } from 'date-fns';
+
 
 export default function Dashboard(){
   const [list, setList] = useState([]);

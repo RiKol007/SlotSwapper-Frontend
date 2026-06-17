@@ -5,7 +5,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Marketplace from './pages/Marketplace';
 import Requests from './pages/Requests';
-import { auth } from './api';
 
 export const UserContext = createContext();
 
