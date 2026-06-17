@@ -5,7 +5,7 @@ import { events } from '../api';
 export default function Dashboard(){
   const [list, setList] = useState([]);
   const [form, setForm] = useState({ title:'', startTime:'', endTime:'' });
-  const [err, setErr] = useState(null);
+  const [, setErr] = useState(null);
 
   const load = async () => {
     try {
