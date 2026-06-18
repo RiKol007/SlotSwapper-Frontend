@@ -10,8 +10,16 @@ export const UserContext = createContext();
 
 function App() {
   const [user, setUser] = useState(() => {
+    const token = localStorage.getItem('token');
     const raw = localStorage.getItem('user');
-    return raw ? JSON.parse(raw) : null;
+    if (!token || !raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch (err) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      return null;
+    }
   });
 
   useEffect(()=> {
@@ -27,20 +35,23 @@ function App() {
   return (
     <UserContext.Provider value={{ user, setUser }}>
       <BrowserRouter>
-        <nav style={{ padding: 12, borderBottom: '1px solid #ddd' }}>
-          <Link to="/" style={{ marginRight: 8 }}>Dashboard</Link>
-          <Link to="/marketplace" style={{ marginRight: 8 }}>Marketplace</Link>
-          <Link to="/requests" style={{ marginRight: 8 }}>Requests</Link>
+        <nav>
+          <div className="nav-left">
+            <Link to="/" className="brand">SlotSwapper</Link>
+            <Link to="/">Dashboard</Link>
+            <Link to="/marketplace">Marketplace</Link>
+            <Link to="/requests">Requests</Link>
+          </div>
           {user ? (
-            <>
-              <span style={{ marginLeft: 12 }}>Hi, {user.name}</span>
-              <button style={{ marginLeft: 8 }} onClick={logout}>Logout</button>
-            </>
+            <div className="nav-right">
+              <span>Hi, {user.name}</span>
+              <button onClick={logout}>Logout</button>
+            </div>
           ) : (
-            <>
-              <Link to="/login" style={{ marginLeft: 12 }}>Login</Link>
+            <div className="nav-right">
+              <Link to="/login">Login</Link>
               <Link to="/signup" style={{ marginLeft: 8 }}>Signup</Link>
-            </>
+            </div>
           )}
         </nav>
 

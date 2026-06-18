@@ -8,63 +8,84 @@ export default function Marketplace(){
   const [selectedTheirSlot, setSelectedTheirSlot] = useState(null);
   const [selectedMySlot, setSelectedMySlot] = useState(null);
   const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [slow, setSlow] = useState(false);
 
   const load = async () => {
+    setErr('');
+    setSlow(false);
+    const timer = setTimeout(() => setSlow(true), 6000);
+    setLoading(true);
     try {
-      const res = await swaps.swappableSlots();
+      const [res, mine] = await Promise.all([
+        swaps.swappableSlots(),
+        events.list()
+      ]);
       setSlots(res);
-      const mine = await events.list();
       setMySwappables(mine.filter(e => e.status === 'SWAPPABLE'));
-    } catch (err) { setMsg(err.message); }
+    } catch (err) {
+      setErr(err.message);
+    } finally {
+      clearTimeout(timer);
+      setLoading(false);
+      setSlow(false);
+    }
   };
 
   useEffect(()=> { load(); }, []);
 
   const requestSwap = async () => {
-    if (!selectedTheirSlot || !selectedMySlot) return setMsg('Choose both slots');
+    setErr('');
+    setMsg('');
+    if (!selectedTheirSlot || !selectedMySlot) return setErr('Choose both slots.');
     try {
       await swaps.createRequest({ mySlotId: selectedMySlot, theirSlotId: selectedTheirSlot });
       setMsg('Request sent');
-      // refresh
       load();
       setSelectedTheirSlot(null);
       setSelectedMySlot(null);
-    } catch (err) { setMsg(err.message); }
+    } catch (err) { setErr(err.message); }
   };
 
   return (
-    <div style={{ padding: 16 }}>
+    <div className="container">
       <h2>Marketplace</h2>
-      {msg && <div style={{ color: 'green' }}>{msg}</div>}
-      <div style={{ display: 'flex', gap: 24 }}>
-        <div style={{ flex: 1 }}>
+      {msg && <div className="success">{msg}</div>}
+      {err && <div className="error">{err}</div>}
+      {loading && <div className="loading"><span className="spinner" />Loading available slots...</div>}
+      {slow && <p className="notice">Server is waking up. This can take 30-60 seconds on the free Render plan.</p>}
+
+      <div className="marketplace">
+        <div>
           <h3>Available slots</h3>
-          {slots.length === 0 && <div>No available slots</div>}
-          <ul>
+          {!loading && slots.length === 0 && <div className="empty-state">No available slots right now.</div>}
+          <ul className="plain-list">
             {slots.map(s => (
-              <li key={s._id}>
+              <li className="marketplace-card" key={s._id}>
                 <div><strong>{s.title}</strong> ({s.owner?.name || 'user'})</div>
-                <div>{format(new Date(s.startTime), 'PPpp')} — {format(new Date(s.endTime), 'PPpp')}</div>
-                <button onClick={()=>setSelectedTheirSlot(s._id)}>{selectedTheirSlot === s._id ? 'Selected' : 'Select'}</button>
+                <div className="time-range">{format(new Date(s.startTime), 'PPpp')} - {format(new Date(s.endTime), 'PPpp')}</div>
+                <button className="primary" onClick={()=>setSelectedTheirSlot(s._id)}>{selectedTheirSlot === s._id ? 'Selected' : 'Select'}</button>
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ width: 320 }}>
+        <div>
           <h3>Your SWAPPABLE slots</h3>
-          {mySwappables.length === 0 && <div>You have no swappable slots</div>}
-          <ul>
+          {!loading && mySwappables.length === 0 && <div className="empty-state">You have no swappable slots.</div>}
+          <ul className="plain-list">
             {mySwappables.map(m => (
-              <li key={m._id}>
-                <div>{m.title} — {format(new Date(m.startTime), 'PPpp')}</div>
-                <button onClick={()=>setSelectedMySlot(m._id)}>{selectedMySlot === m._id ? 'Selected' : 'Select'}</button>
+              <li className="marketplace-card" key={m._id}>
+                <div>{m.title}</div>
+                <div className="time-range">{format(new Date(m.startTime), 'PPpp')}</div>
+                <button className="primary" onClick={()=>setSelectedMySlot(m._id)}>{selectedMySlot === m._id ? 'Selected' : 'Select'}</button>
               </li>
             ))}
           </ul>
 
-          <div style={{ marginTop: 12 }}>
-            <button onClick={requestSwap}>Request Swap</button>
+          <div className="actions">
+            <button className="primary" onClick={requestSwap}>Request Swap</button>
           </div>
         </div>
       </div>

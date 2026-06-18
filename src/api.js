@@ -1,19 +1,28 @@
-const API_BASE = 'https://slotswapper-backend-ob57.onrender.com/api';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://slotswapper-backend-ob57.onrender.com/api';
+
 function getToken() {
   return localStorage.getItem('token');
 }
 
 async function request(path, options = {}) {
-  const headers = options.headers || {};
+  const headers = { ...(options.headers || {}) };
   headers['Content-Type'] = 'application/json';
   const token = getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  const text = await res.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
-  if (!res.ok) throw new Error(data?.message || res.statusText);
-  return data;
+
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+    if (!res.ok) throw new Error(data?.message || res.statusText || 'Request failed');
+    return data;
+  } catch (err) {
+    if (err.name === 'TypeError') {
+      throw new Error('Cannot reach the server. It may still be waking up, so please try again in a moment.');
+    }
+    throw err;
+  }
 }
 
 export const auth = {
