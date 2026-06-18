@@ -1,5 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000/api';
-
+const API_BASE = 'https://slotswapper-backend-ob57.onrender.com/api';
 function getToken() {
   return localStorage.getItem('token');
 }
